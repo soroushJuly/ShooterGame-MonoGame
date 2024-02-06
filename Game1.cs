@@ -76,6 +76,16 @@ namespace ShooterGame
         // Getting and reacting to the inputs for the player
         private void UpdatePlayer(GameTime gameTime)
         {
+            //Get Mouse State then Capture the Button type and Respond Button Press   
+            Vector2 mousePosition = new Vector2(currentMouseState.X, currentMouseState.Y);
+            if (currentMouseState.LeftButton == ButtonState.Pressed)
+            {
+                Vector2 posDelta = mousePosition - player.Position;
+                posDelta.Normalize();
+                posDelta = posDelta * playerMoveSpeed;
+                player.Position = player.Position + posDelta;
+            }
+
             // Get Thumbstick Controls   
             player.Position.X += currentGamePadState.ThumbSticks.Left.X * playerMoveSpeed;
             player.Position.Y -= currentGamePadState.ThumbSticks.Left.Y * playerMoveSpeed;
