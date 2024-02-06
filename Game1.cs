@@ -35,6 +35,8 @@ namespace ShooterGame
             // TODO: Add your initialization logic here
             // Initialize the player class
             player = new Player();
+            // Set a constant player move speed
+            playerMoveSpeed = 8.0f;
 
 
             base.Initialize();
@@ -56,8 +58,42 @@ namespace ShooterGame
                 Exit();
 
             // TODO: Add your update logic here
+            // Save the previous state of the keyboard, game pad, and mouse so we can determine single key/button presses  
+            previousGamePadState = currentGamePadState;
+            previousKeyboardState = currentKeyboardState;
+            previousMouseState = currentMouseState;
+
+            // Read the current state of the keyboard, gamepad and mouse and store it  
+            currentKeyboardState = Keyboard.GetState();
+            currentGamePadState = GamePad.GetState(PlayerIndex.One);
+            currentMouseState = Mouse.GetState();
+
+            //Update the player   
+            UpdatePlayer(gameTime);
 
             base.Update(gameTime);
+        }
+        // Getting and reacting to the inputs for the player
+        private void UpdatePlayer(GameTime gameTime)
+        {
+            // Get Thumbstick Controls   
+            player.Position.X += currentGamePadState.ThumbSticks.Left.X * playerMoveSpeed;
+            player.Position.Y -= currentGamePadState.ThumbSticks.Left.Y * playerMoveSpeed;
+            // Use the Keyboard / Dpad   
+            if (currentKeyboardState.IsKeyDown(Keys.Left) || currentGamePadState.DPad.Left == ButtonState.Pressed)
+            { player.Position.X -= playerMoveSpeed; }
+            if (currentKeyboardState.IsKeyDown(Keys.Right) || currentGamePadState.DPad.Right == ButtonState.Pressed)
+            { player.Position.X += playerMoveSpeed; }
+            if (currentKeyboardState.IsKeyDown(Keys.Up) || currentGamePadState.DPad.Up == ButtonState.Pressed)
+            { player.Position.Y -= playerMoveSpeed; }
+            if (currentKeyboardState.IsKeyDown(Keys.Down) || currentGamePadState.DPad.Down == ButtonState.Pressed)
+            { player.Position.Y += playerMoveSpeed; }
+
+            // Make sure that the player does not go out of bounds   
+            player.Position.X = MathHelper.Clamp(player.Position.X, player.Width / 2,
+            GraphicsDevice.Viewport.Width - player.Width / 2);
+            player.Position.Y = MathHelper.Clamp(player.Position.Y, player.Height / 2,
+            GraphicsDevice.Viewport.Height - player.Height / 2);
         }
 
         protected override void Draw(GameTime gameTime)
