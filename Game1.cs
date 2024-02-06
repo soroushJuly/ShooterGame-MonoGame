@@ -48,12 +48,17 @@ namespace ShooterGame
 
             // TODO: use this.Content to load your game content here
             // Load the player resources   
-            Vector2 playerPosition = new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
-            player.Initialize(Content.Load<Texture2D>("Graphics\\player"), playerPosition);
+            Animation playerAnimation = new Animation();
+            Texture2D playerTexture = Content.Load<Texture2D>("Graphics\\shipAnimation");
+            playerAnimation.Initialize(playerTexture, Vector2.Zero, 115, 69, 8, 30, Color.White, 1f, true);
+            Vector2 playerPosition = new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X,
+            GraphicsDevice.Viewport.TitleSafeArea.Y + GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
+            player.Initialize(playerAnimation, playerPosition);
         }
 
         protected override void Update(GameTime gameTime)
         {
+            player.Update(gameTime);
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
@@ -76,7 +81,8 @@ namespace ShooterGame
         // Getting and reacting to the inputs for the player
         private void UpdatePlayer(GameTime gameTime)
         {
-            //Get Mouse State then Capture the Button type and Respond Button Press   
+            // Get Mouse State then Capture the Button type and Respond Button Press
+            // TODO: fix mouse input on reaching the mouse position 
             Vector2 mousePosition = new Vector2(currentMouseState.X, currentMouseState.Y);
             if (currentMouseState.LeftButton == ButtonState.Pressed)
             {
