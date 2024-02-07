@@ -120,6 +120,9 @@ namespace ShooterGame
             // Update the enemies  
             UpdateEnemies(gameTime);
 
+            // Update the collisions   
+            UpdateCollision();
+
             // Update the parallaxing background    
             bgLayer1.Update(gameTime);
             bgLayer2.Update(gameTime);
@@ -174,6 +177,31 @@ namespace ShooterGame
             enemy.Initialize(enemyAnimation, position);
             // Add the enemy to the active enemies list 
             enemies.Add(enemy);
+        }
+        private void UpdateCollision()
+        {
+            // Use the Rectangle's built-in intersect function to   
+            // determine if two objects are overlapping   
+            Rectangle playerRectangle;
+            Rectangle enemyRectangle;
+            // Only create the rectangle once for the player  
+            playerRectangle = new Rectangle((int)player.Position.X, (int)player.Position.Y, player.Width, player.Height);
+            // Do the collision between the player and the enemies
+            for (int i = 0; i < enemies.Count; i++)  
+            {
+                enemyRectangle = new Rectangle((int)enemies[i].Position.X, (int)enemies[i].Position.Y, 
+                    enemies[i].Width, 
+                    enemies[i].Height);
+                // Determine if the two objects collided with each other  
+                if (playerRectangle.Intersects(enemyRectangle))
+                {
+                    player.Health -= enemies[i].Damage;
+                    // Since the enemy collided with the player destroy it  
+                    enemies[i].Health = 0;
+                    // If the player health is less than zero we died  
+                    if (player.Health <= 0) player.Active = false;
+                }
+            }
         }
         private void UpdateEnemies(GameTime gameTime)
         {
