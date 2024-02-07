@@ -48,6 +48,11 @@ namespace ShooterGame
         TimeSpan laserSpawnTime;
         TimeSpan previousLaserSpawnTime;
 
+        // Collections of explosions  
+        List<Explosion> explosions;
+        //Texture to hold explosion animation.  
+        Texture2D explosionTexture;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -83,6 +88,8 @@ namespace ShooterGame
             bgLayer1 = new ParallaxingBackground();
             bgLayer2 = new ParallaxingBackground();
 
+            // init our collection of explosions.
+            explosions = new List<Explosion>();
 
             base.Initialize();
         }
@@ -112,6 +119,9 @@ namespace ShooterGame
             bgLayer2.Initialize(Content, "Graphics/bgLayer2", GraphicsDevice.Viewport.Width, 
                 GraphicsDevice.Viewport.Height, -2);
             mainBackground = Content.Load<Texture2D>("Graphics/mainbackground");
+
+            // load the explosion sheet
+            explosionTexture = Content.Load<Texture2D>("Graphics\\explosion");
         }
 
         protected override void Update(GameTime gameTime)
@@ -142,6 +152,9 @@ namespace ShooterGame
 
             // Update the collisions   
             UpdateCollision();
+
+            // Update explosions  
+            UpdateExplosions(gameTime);
 
             // Update the parallaxing background    
             bgLayer1.Update(gameTime);
@@ -223,6 +236,8 @@ namespace ShooterGame
                 if (playerRectangle.Intersects(enemyRectangle))
                 {
                     player.Health -= enemies[i].Damage;
+                    // Show the explosion where the enemy was...  
+                    AddExplosion(enemies[i].Position);
                     // Since the enemy collided with the player destroy it  
                     enemies[i].Health = 0;
                     // If the player health is less than zero we died  
@@ -237,6 +252,8 @@ namespace ShooterGame
                     // test the bounds of the laser and enemy  
                     if (laserRectangle.Intersects(enemyRectangle))
                     {
+                        // Show the explosion where the enemy was...  
+                        AddExplosion(enemies[i].Position);
                         // kill off the enemy  
                         enemies[i].Health = 0;
                         // kill off the laserbeam 
@@ -245,6 +262,7 @@ namespace ShooterGame
                 }
             }
         }
+
         private void UpdateEnemies(GameTime gameTime)
         {
             // Spawn a new enemy enemy every 1.5 seconds  
@@ -302,7 +320,24 @@ namespace ShooterGame
         /* todo: add code to create a laser. */
         // laserSoundInstance.Play();  
     }
-    protected override void Draw(GameTime gameTime)
+        protected void AddExplosion(Vector2 enemyPosition)
+        {
+            Animation explosionAnimation = new Animation();
+            explosionAnimation.Initialize(explosionTexture, enemyPosition, 134, 134, 12, 30, Color.White, 1.0f, true);
+            Explosion explosion = new Explosion();
+            explosion.Initialize(explosionAnimation, enemyPosition);
+            explosions.Add(explosion);
+        }
+        private void UpdateExplosions(GameTime gameTime)
+        {
+            for (var e = explosions.Count - 1; e >= 0; e--)
+            {
+                explosions[e].Update(gameTime);
+                if (!explosions[e].Active)
+                    explosions.Remove(explosions[e]);
+            }
+        }
+        protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
@@ -330,6 +365,13 @@ namespace ShooterGame
             {
                 l.Draw(_spriteBatch);
             }
+
+            // draw explosions   
+            foreach (var e in explosions)
+            {
+                e.Draw(_spriteBatch);
+            }
+
 
             // Stop drawing  
             _spriteBatch.End();
