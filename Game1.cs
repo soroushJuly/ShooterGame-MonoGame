@@ -40,6 +40,14 @@ namespace ShooterGame
         // A random number generator  
         Random random;
 
+        // texture to hold the laser.  
+        Texture2D laserTexture;
+        List<Laser> laserBeams;
+
+        // govern how fast our laser can fire.  
+        TimeSpan laserSpawnTime;
+        TimeSpan previousLaserSpawnTime;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -64,6 +72,12 @@ namespace ShooterGame
             // Initialize our random number generator  
             random = new Random();
 
+            // init our laser
+            laserBeams = new List<Laser>();
+            const float SECONDS_IN_MINUTE = 60f;
+            const float RATE_OF_FIRE = 100f;
+            laserSpawnTime = TimeSpan.FromSeconds(SECONDS_IN_MINUTE / RATE_OF_FIRE);
+            previousLaserSpawnTime = TimeSpan.Zero;
 
             //Background  
             bgLayer1 = new ParallaxingBackground();
@@ -88,6 +102,9 @@ namespace ShooterGame
 
             // Load the enemy animation  
             enemyTexture = Content.Load<Texture2D>("Graphics/mineAnimation");
+
+            // load the texture to serve as the laser
+            laserTexture = Content.Load<Texture2D>("Graphics\\laser");
 
             // Load the parallaxing background   
             bgLayer1.Initialize(Content, "Graphics/bgLayer1", GraphicsDevice.Viewport.Width, 
@@ -119,6 +136,9 @@ namespace ShooterGame
 
             // Update the enemies  
             UpdateEnemies(gameTime);
+
+            // update laserbeams   
+            UpdateLaserBeams(gameTime);
 
             // Update the collisions   
             UpdateCollision();
@@ -161,6 +181,12 @@ namespace ShooterGame
             GraphicsDevice.Viewport.Width - player.Width / 2);
             player.Position.Y = MathHelper.Clamp(player.Position.Y, player.Height / 2,
             GraphicsDevice.Viewport.Height - player.Height / 2);
+
+            // Fire Laser
+            if(currentKeyboardState.IsKeyDown(Keys.Space) || currentGamePadState.Buttons.X == ButtonState.Pressed)
+            {
+                FireLaser(gameTime);
+            }
         }
         private void AddEnemy()
         {
@@ -184,6 +210,7 @@ namespace ShooterGame
             // determine if two objects are overlapping   
             Rectangle playerRectangle;
             Rectangle enemyRectangle;
+            Rectangle laserRectangle;
             // Only create the rectangle once for the player  
             playerRectangle = new Rectangle((int)player.Position.X, (int)player.Position.Y, player.Width, player.Height);
             // Do the collision between the player and the enemies
@@ -200,6 +227,21 @@ namespace ShooterGame
                     enemies[i].Health = 0;
                     // If the player health is less than zero we died  
                     if (player.Health <= 0) player.Active = false;
+                }
+                // Laserbeam vs Enemy Collision  
+                for (var l = 0; l < laserBeams.Count; l++)
+                {
+                    // create a rectangle for this laserbeam  
+                    laserRectangle = new Rectangle((int)laserBeams[l].Position.X, 
+                        (int)laserBeams[l].Position.Y, laserBeams[l].Width, laserBeams[l].Height);
+                    // test the bounds of the laser and enemy  
+                    if (laserRectangle.Intersects(enemyRectangle))
+                    {
+                        // kill off the enemy  
+                        enemies[i].Health = 0;
+                        // kill off the laserbeam 
+                        laserBeams[l].Active = false;
+                    }
                 }
             }
         }
@@ -222,8 +264,45 @@ namespace ShooterGame
                 }
             }
         }
-
-        protected override void Draw(GameTime gameTime)
+        protected void FireLaser(GameTime gameTime)
+        {
+            // govern the rate of fire for our lasers  
+            if (gameTime.TotalGameTime - previousLaserSpawnTime > laserSpawnTime)  
+            {  
+                previousLaserSpawnTime = gameTime.TotalGameTime;   
+            }   
+            // Add the laser to our list.  
+            AddLaser();
+    }
+        private void UpdateLaserBeams(GameTime gameTime)
+        {
+            // Update the Projectiles  
+            for (int i = laserBeams.Count - 1; i >= 0; i--)
+            {
+                laserBeams[i].Update(gameTime);
+                if (laserBeams[i].Active == false)
+                {
+                    laserBeams.RemoveAt(i);
+                }
+            }
+        }
+        protected void AddLaser()
+    {
+        Animation laserAnimation = new Animation();
+        // initlize the laser animation  
+        laserAnimation.Initialize(laserTexture, player.Position, 46, 16, 1, 30, Color.White, 1f, true);
+        Laser laser = new Laser();
+        // Get the starting postion of the laser.   
+        var laserPostion = player.Position;
+        // Adjust the position slightly to match the muzzle of the cannon.  
+        laserPostion.X += 30;
+        // init the laser  
+        laser.Initialize(laserAnimation, laserPostion);
+        laserBeams.Add(laser);
+        /* todo: add code to create a laser. */
+        // laserSoundInstance.Play();  
+    }
+    protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
@@ -244,6 +323,12 @@ namespace ShooterGame
             for (int i = 0; i < enemies.Count; i++)
             {
                 enemies[i].Draw(_spriteBatch);
+            }
+
+            // Draw the lasers.  
+            foreach (var l in laserBeams)
+            {
+                l.Draw(_spriteBatch);
             }
 
             // Stop drawing  
