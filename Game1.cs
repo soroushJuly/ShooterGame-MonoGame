@@ -66,6 +66,11 @@ namespace ShooterGame
         // Game Music.  
         private Song gameMusic;
 
+        // The font used to display UI elements  
+        SpriteFont font;
+        //Number that holds the player score  
+        int score;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -103,6 +108,9 @@ namespace ShooterGame
 
             // init our collection of explosions.
             explosions = new List<Explosion>();
+
+            //Set player's score to zero
+            score = 0;
 
             base.Initialize();
         }
@@ -146,6 +154,9 @@ namespace ShooterGame
             gameMusic = Content.Load<Song>("Sound\\gameMusic");
             // Start playing the music.  
             MediaPlayer.Play(gameMusic);
+
+            // Load the score font   
+            font = Content.Load<SpriteFont>("Graphics\\gameFont");
         }
 
         protected override void Update(GameTime gameTime)
@@ -223,6 +234,13 @@ namespace ShooterGame
             if(currentKeyboardState.IsKeyDown(Keys.Space) || currentGamePadState.Buttons.X == ButtonState.Pressed)
             {
                 FireLaser(gameTime);
+            }
+
+            // reset score if player health goes to zero  
+            if (player.Health <= 0)
+            {
+                player.Health = 100;
+                score = 0;
             }
         }
         private void AddEnemy()
@@ -302,6 +320,8 @@ namespace ShooterGame
                 enemies[i].Update(gameTime);
                 if (enemies[i].Active == false)
                 {
+                    //Add to the player's score  
+                    score += enemies[i].Value;
                     enemies.RemoveAt(i);
                 }
             }
@@ -399,6 +419,13 @@ namespace ShooterGame
             {
                 e.Draw(_spriteBatch);
             }
+
+            // Draw the score  
+            _spriteBatch.DrawString(font, "score: " + score, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X,
+            GraphicsDevice.Viewport.TitleSafeArea.Y), Color.White);
+            // Draw the player health  
+            _spriteBatch.DrawString(font, "health: " + player.Health, new
+            Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + 30), Color.White);
 
 
             // Stop drawing  
