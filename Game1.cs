@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace ShooterGame
 {
@@ -61,6 +62,9 @@ namespace ShooterGame
         //Our Explosion Sound.  
         private SoundEffect explosionSound;
         private SoundEffectInstance explosionSoundInstance;
+
+        // Game Music.  
+        private Song gameMusic;
 
         public Game1()
         {
@@ -137,6 +141,11 @@ namespace ShooterGame
             laserSoundInstance = laserSound.CreateInstance();
             explosionSound = Content.Load<SoundEffect>("Sound\\explosion");
             explosionSoundInstance = explosionSound.CreateInstance();
+
+            // Load the game music  
+            gameMusic = Content.Load<Song>("Sound\\gameMusic");
+            // Start playing the music.  
+            MediaPlayer.Play(gameMusic);
         }
 
         protected override void Update(GameTime gameTime)
