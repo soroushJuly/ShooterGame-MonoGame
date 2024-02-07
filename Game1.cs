@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Audio;
 
 namespace ShooterGame
 {
@@ -53,6 +54,14 @@ namespace ShooterGame
         //Texture to hold explosion animation.  
         Texture2D explosionTexture;
 
+        //Our Laser Sound and Instance  
+        private SoundEffect laserSound;
+        private SoundEffectInstance laserSoundInstance;
+
+        //Our Explosion Sound.  
+        private SoundEffect explosionSound;
+        private SoundEffectInstance explosionSoundInstance;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -80,7 +89,7 @@ namespace ShooterGame
             // init our laser
             laserBeams = new List<Laser>();
             const float SECONDS_IN_MINUTE = 60f;
-            const float RATE_OF_FIRE = 100f;
+            const float RATE_OF_FIRE = 200f;
             laserSpawnTime = TimeSpan.FromSeconds(SECONDS_IN_MINUTE / RATE_OF_FIRE);
             previousLaserSpawnTime = TimeSpan.Zero;
 
@@ -122,6 +131,12 @@ namespace ShooterGame
 
             // load the explosion sheet
             explosionTexture = Content.Load<Texture2D>("Graphics\\explosion");
+
+            // Load the laserSound Effect and create the effect Instance  
+            laserSound = Content.Load<SoundEffect>("Sound\\laserFire");
+            laserSoundInstance = laserSound.CreateInstance();
+            explosionSound = Content.Load<SoundEffect>("Sound\\explosion");
+            explosionSoundInstance = explosionSound.CreateInstance();
         }
 
         protected override void Update(GameTime gameTime)
@@ -287,10 +302,12 @@ namespace ShooterGame
             // govern the rate of fire for our lasers  
             if (gameTime.TotalGameTime - previousLaserSpawnTime > laserSpawnTime)  
             {  
-                previousLaserSpawnTime = gameTime.TotalGameTime;   
+                previousLaserSpawnTime = gameTime.TotalGameTime;
+                // Add the laer to our list.  
+                AddLaser();
+                // Play the laser sound!  
+                laserSoundInstance.Play();
             }   
-            // Add the laser to our list.  
-            AddLaser();
     }
         private void UpdateLaserBeams(GameTime gameTime)
         {
@@ -327,6 +344,8 @@ namespace ShooterGame
             Explosion explosion = new Explosion();
             explosion.Initialize(explosionAnimation, enemyPosition);
             explosions.Add(explosion);
+
+            explosionSound.Play();
         }
         private void UpdateExplosions(GameTime gameTime)
         {
@@ -377,6 +396,11 @@ namespace ShooterGame
             _spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+        protected override void UnloadContent()
+        {
+            laserSoundInstance.Dispose();
+            explosionSoundInstance.Dispose();
         }
     }
 }
