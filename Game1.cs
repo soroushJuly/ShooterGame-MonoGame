@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -29,6 +31,15 @@ namespace ShooterGame
         ParallaxingBackground bgLayer1;
         ParallaxingBackground bgLayer2;
 
+        // Enemies  
+        Texture2D enemyTexture;
+        List<Enemy> enemies;
+        //The rate at which the enemies appear  
+        TimeSpan enemySpawnTime;
+        TimeSpan previousSpawnTime;
+        // A random number generator  
+        Random random;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -43,6 +54,16 @@ namespace ShooterGame
             player = new Player();
             // Set a constant player move speed
             playerMoveSpeed = 8.0f;
+
+            // Initialize the enemies list
+            enemies = new List<Enemy>();
+            // Set the time keepers to zero  
+            previousSpawnTime = TimeSpan.Zero;
+            // Used to determine how fast enemy respawns  
+            enemySpawnTime = TimeSpan.FromSeconds(1.0f);
+            // Initialize our random number generator  
+            random = new Random();
+
 
             //Background  
             bgLayer1 = new ParallaxingBackground();
@@ -64,6 +85,9 @@ namespace ShooterGame
             Vector2 playerPosition = new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X,
             GraphicsDevice.Viewport.TitleSafeArea.Y + GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
             player.Initialize(playerAnimation, playerPosition);
+
+            // Load the enemy animation  
+            enemyTexture = Content.Load<Texture2D>("Graphics/mineAnimation");
 
             // Load the parallaxing background   
             bgLayer1.Initialize(Content, "Graphics/bgLayer1", GraphicsDevice.Viewport.Width, 
@@ -92,6 +116,9 @@ namespace ShooterGame
 
             //Update the player   
             UpdatePlayer(gameTime);
+
+            // Update the enemies  
+            UpdateEnemies(gameTime);
 
             // Update the parallaxing background    
             bgLayer1.Update(gameTime);
@@ -132,6 +159,41 @@ namespace ShooterGame
             player.Position.Y = MathHelper.Clamp(player.Position.Y, player.Height / 2,
             GraphicsDevice.Viewport.Height - player.Height / 2);
         }
+        private void AddEnemy()
+        {
+            // Create the animation object  
+            Animation enemyAnimation = new Animation();
+            // Initialize the animation with the correct animation information  
+            enemyAnimation.Initialize(enemyTexture, Vector2.Zero, 47, 61, 8, 30, Color.White, 1f, true);
+            // Randomly generate the position of the enemy  
+            Vector2 position = new Vector2(GraphicsDevice.Viewport.Width + enemyTexture.Width / 2, random.Next(100,
+            GraphicsDevice.Viewport.Height - 100));
+            // Create an enemy  
+            Enemy enemy = new Enemy();
+            // Initialize the enemy  
+            enemy.Initialize(enemyAnimation, position);
+            // Add the enemy to the active enemies list 
+            enemies.Add(enemy);
+        }
+        private void UpdateEnemies(GameTime gameTime)
+        {
+            // Spawn a new enemy enemy every 1.5 seconds  
+            if (gameTime.TotalGameTime - previousSpawnTime > enemySpawnTime)
+            {
+                previousSpawnTime = gameTime.TotalGameTime;
+                // Add an Enemy  
+                AddEnemy();
+            }
+            // Update the Enemies  
+            for (int i = enemies.Count - 1; i >= 0; i--)
+            {
+                enemies[i].Update(gameTime);
+                if (enemies[i].Active == false)
+                {
+                    enemies.RemoveAt(i);
+                }
+            }
+        }
 
         protected override void Draw(GameTime gameTime)
         {
@@ -150,6 +212,11 @@ namespace ShooterGame
             // Draw the Player  
             player.Draw(_spriteBatch);
 
+            // Draw the Enemies   
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                enemies[i].Draw(_spriteBatch);
+            }
 
             // Stop drawing  
             _spriteBatch.End();
